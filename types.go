@@ -12,7 +12,7 @@ import (
 	"github.com/satori/go.uuid"
 )
 
-const BUFFER_INFO_SIZE = 232
+const BUFFER_INFO_SIZE = 202
 
 // DataNode should be encoded as |len|value....|
 type DataNode struct {
@@ -136,7 +136,6 @@ func (dl *DataLink) DeleteNodeAtTail() *DataNode {
 type BufferInfo struct {
 	Id     string
 	Length int64
-	File   string
 
 	//Control weather set up the buffer through recoverying from file
 	RecoveryControl bool
@@ -146,12 +145,6 @@ type BufferInfo struct {
 
 	FileStartSeek int64 //start position in file of the persistence
 	FileEndSeek   int64 //last position in file for the persistence
-}
-
-func SetBufferInfoFile(file string) func(*BufferInfo) {
-	return func(info *BufferInfo) {
-		info.File = file
-	}
 }
 
 func SetBufferInfoPersistenceControl(ctl bool) func(*BufferInfo) {
@@ -197,6 +190,7 @@ func (b *BufferInfo) Bytes() ([]byte, error) {
 
 type Buffer struct {
 	BufferInfo
+	File string
 
 	Mutex sync.RWMutex
 
