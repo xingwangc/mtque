@@ -2,6 +2,7 @@ package mtque
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
 )
@@ -84,6 +85,17 @@ func NewStack(opts ...func(*Stack)) *Stack {
 		} else {
 			stackList[stack.File] = stack
 		}
+
+		if !stack.PersistenceControl {
+			stack.PersistenceControl = true
+		}
+		if stack.PersistencePeriod == 0 {
+			stack.PersistencePeriod = DEFAULT_PERIOD_PERSISTENCE_TIME
+		}
+
+		if stack.RecoveryControl {
+			stack.Recovery()
+		}
 	}
 
 	return stack
@@ -113,8 +125,11 @@ func DestroyStack(file string) {
 	stackMutex.Lock()
 	defer stackMutex.Unlock()
 
-	delete(stackList, file)
-	//TODO：delete file
+	if _, ok := stackList[file]; ok {
+		delete(stackList, file)
+		os.Remove(file)
+	}
+
 }
 
 // SetPersistencePeriod set persistence period for stack.
@@ -127,10 +142,27 @@ func (s *Stack) SetPersistencePeriod(p time.Duration) {
 
 // SetFile will set the persistence file for stack.
 func (s *Stack) SetFile(file string) error {
-	s.Mutex.Lock()
-	defer s.Mutex.Unlock()
+	if s.File != "" && file == s.File {
+		return nil
+	} else if s.File != "" && file != s.File {
+		return fmt.Errorf("the new file:[%s] != the exist one[%s], you should use the ForceSetFile method to reset it. And should notice that if the recovery mode is enabled, the stack will be recoverd from the new file", file, s.File)
+	}
 
-	return fmt.Errorf("Not implemented")
+	s.File = file
+
+	if s.RecoveryControl {
+		err := s.Recovery()
+		if err != nil {
+			return err
+		}
+	}
+
+	s.PersistenceControl = true
+	if s.PersistencePeriod == 0 {
+		s.PersistencePeriod = DEFAULT_PERIOD_PERSISTENCE_TIME
+	}
+
+	return nil
 }
 
 // SetPersistenceControl enable/disable the persistence control for stack.

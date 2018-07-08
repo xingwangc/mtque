@@ -13,6 +13,7 @@ import (
 )
 
 const BUFFER_INFO_SIZE = 202
+const DEFAULT_PERIOD_PERSISTENCE_TIME = time.Minute * 5
 
 // DataNode should be encoded as |len|value....|
 type DataNode struct {
