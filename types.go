@@ -298,6 +298,10 @@ func (b *Buffer) DeleteNodeAtTail() {
 	}
 }
 
+func (b *Buffer) SetRegister(datatype interface{}) {
+	b.Register = datatype
+}
+
 //IncrementPersistent will Persistent datas from last persistence at
 //the end of the file.
 func (b *Buffer) incrementPersistent() error {
