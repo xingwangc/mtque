@@ -148,13 +148,40 @@ func (s *Stack) SetFile(file string) error {
 		return fmt.Errorf("the new file:[%s] != the exist one[%s], you should use the ForceSetFile method to reset it. And should notice that if the recovery mode is enabled, the stack will be recoverd from the new file", file, s.File)
 	}
 
+	if _, ok := stackList[file]; ok {
+		return fmt.Errorf("there is already a stack with file [%s] in stacklist, use the ForceSetFile method to reset current one", file)
+	}
+
 	s.File = file
+	stackList[file] = s
 
 	if s.RecoveryControl {
-		err := s.Recovery()
-		if err != nil {
-			return err
-		}
+		s.Recovery()
+	}
+
+	s.PersistenceControl = true
+	if s.PersistencePeriod == 0 {
+		s.PersistencePeriod = DEFAULT_PERIOD_PERSISTENCE_TIME
+	}
+
+	return nil
+}
+
+func (s *Stack) ForceSetFile(file string) error {
+	if stack, ok := stackList[file]; ok {
+		s = stack
+		return nil
+	}
+
+	if s.File != "" {
+		delete(stackList, s.File)
+	}
+
+	s.File = file
+	stackList[file] = s
+
+	if s.RecoveryControl {
+		s.Recovery()
 	}
 
 	s.PersistenceControl = true
