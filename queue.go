@@ -200,6 +200,10 @@ func (q *Queue) EnQueue(value interface{}) {
 	q.Datas.AddNodeAtTail(node)
 
 	q.Length++
+
+	if q.Length == 1 {
+		q.SetRegister(value)
+	}
 }
 
 func (q *Queue) DeQueue() (interface{}, error) {

@@ -262,6 +262,10 @@ func (s *Stack) Push(value interface{}) {
 	node := NewDataNode(value)
 	s.Datas.AddNodeAtTail(node)
 	s.Length++
+
+	if s.Length == 1 {
+		s.SetRegister(value)
+	}
 }
 
 // Pop will pop the value at the tail of stack out.
