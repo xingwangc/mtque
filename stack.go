@@ -94,11 +94,11 @@ func NewStack(opts ...func(*Stack)) *Stack {
 // one from the file. If recovery failed, it will construct a new one,
 // and set persistence and recovery control as true.
 func GetStack(file string) *Stack {
-	listMutex.RLock()
+	stackMutex.RLock()
 	if stack, ok := stackList[file]; ok {
 		return stack
 	}
-	defer listMutex.RUnlock()
+	defer stackMutex.RUnlock()
 
 	return NewStack(
 		SetStackFile(file),
@@ -110,8 +110,8 @@ func GetStack(file string) *Stack {
 // DestroyStack will destroy the stack in the stack list
 // And then delete the persistence file for the stack.
 func DestroyStack(file string) {
-	listMutex.Lock()
-	defer listMutex.Unlock()
+	stackMutex.Lock()
+	defer stackMutex.Unlock()
 
 	delete(stackList, file)
 	//TODO：delete file
@@ -212,7 +212,7 @@ func (s *Stack) Pop() (interface{}, error) {
 	defer s.Mutex.Unlock()
 
 	if s.Length == 0 {
-		return nil, fmt.Errorf("queue is empty")
+		return nil, fmt.Errorf("stack is empty")
 	}
 
 	value, err := s.Datas.GetTailValue()
