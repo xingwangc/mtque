@@ -76,10 +76,29 @@ func (q *Queue) SetPersistencePeriod(p time.Duration) {
 
 // SetFile will set the persistence file for queue.
 func (q *Queue) SetFile(file string) error {
-	q.Mutex.Lock()
-	defer q.Mutex.Unlock()
+	if q.File != "" && file == q.File {
+		return nil
+	} else if q.File != "" && file != q.File {
+		return fmt.Errorf("the new file:[%s] != the exist one[%s], you should use the ForceSetFile method to reset it. And should notice that if the recovery mode is enabled, the stack will be recoverd from the new file", file, q.File)
+	}
 
-	return fmt.Errorf("Not implemented")
+	if _, ok := queueList[file]; ok {
+		return fmt.Errorf("there is already a stack with file [%s] in stacklist, use the ForceSetFile method to reset current one", file)
+	}
+
+	q.File = file
+	queueList[file] = q
+
+	if q.RecoveryControl {
+		q.Recovery()
+	}
+
+	q.PersistenceControl = true
+	if q.PersistencePeriod == 0 {
+		q.PersistencePeriod = DEFAULT_PERIOD_PERSISTENCE_TIME
+	}
+
+	return nil
 }
 
 // SetPersistenceControl enable/disable the persistence control for queue.
