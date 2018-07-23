@@ -101,6 +101,31 @@ func (q *Queue) SetFile(file string) error {
 	return nil
 }
 
+func (q *Queue) ForceSetFile(file string) error {
+	if queue, ok := queueList[file]; ok {
+		q = queue
+		return nil
+	}
+
+	if q.File != "" {
+		delete(queueList, q.File)
+	}
+
+	q.File = file
+	queueList[file] = q
+
+	if q.RecoveryControl {
+		q.Recovery()
+	}
+
+	q.PersistenceControl = true
+	if q.PersistencePeriod == 0 {
+		q.PersistencePeriod = DEFAULT_PERIOD_PERSISTENCE_TIME
+	}
+
+	return nil
+}
+
 // SetPersistenceControl enable/disable the persistence control for queue.
 func (q *Queue) SetPersistenceControl(ctl bool) {
 	q.Mutex.Lock()
