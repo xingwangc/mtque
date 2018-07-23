@@ -98,7 +98,9 @@ func (dl *DataLink) DeleteNodeAtHead() *DataNode {
 	}
 
 	node := dl.Head
-	dl.Head.Next.Previous = nil
+	if dl.Head.Next != nil {
+		dl.Head.Next.Previous = nil
+	}
 	dl.Head = dl.Head.Next
 	node.Next = nil
 
@@ -123,7 +125,9 @@ func (dl *DataLink) DeleteNodeAtTail() *DataNode {
 	}
 
 	node := dl.Tail
-	dl.Tail.Previous.Next = nil
+	if dl.Tail.Previous != nil {
+		dl.Tail.Previous.Next = nil
+	}
 	dl.Tail = dl.Tail.Previous
 	node.Previous = nil
 
@@ -199,6 +203,8 @@ type Buffer struct {
 
 	//User should register the data origin type to recovery data
 	Register interface{}
+
+	persRunning bool
 }
 
 func SetBufferFile(file string) func(*Buffer) {
