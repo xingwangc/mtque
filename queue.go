@@ -14,6 +14,14 @@ var (
 func init() {
 	queueList = make(map[string]*Queue)
 	queueMutex = sync.RWMutex{}
+
+	go func() {
+		for {
+			for _, queue := range queueList {
+				go queue.PeriodicallyPersistent()
+			}
+		}
+	}()
 }
 
 type Queue struct {
@@ -268,8 +276,16 @@ func (q *Queue) DeQueue() (interface{}, error) {
 }
 
 func (q *Queue) Persistent() error {
-	q.Mutex.RLock()
-	defer q.Mutex.RUnlock()
-
 	return q.Buffer.Persistent()
+}
+
+func (q *Queue) PeriodicallyPersistent() {
+	if q.PersistenceControl && !q.persRunning {
+		q.persRunning = true
+		select {
+		case <-time.After(q.PersistencePeriod):
+			q.Persistent()
+		}
+		q.persRunning = false
+	}
 }

@@ -132,3 +132,60 @@ func TestDeQueue(t *testing.T) {
 		t.Fatal("dequeue value error!")
 	}
 }
+
+func TestQueuePeriodicallyPersistence(t *testing.T) {
+	queue := NewQueue(
+		SetQueueFile("./queue_periodically"),
+		SetQueuePersistencePeriod(10*time.Millisecond),
+		SetQueuePersistenceControl(true),
+	)
+
+	queue.EnQueue(2)
+	time.Sleep(5 * time.Millisecond)
+	queue.EnQueue(4)
+	time.Sleep(5 * time.Millisecond)
+	queue.EnQueue(6)
+	time.Sleep(5 * time.Millisecond)
+	queue.DeQueue()
+	time.Sleep(5 * time.Millisecond)
+	queue.EnQueue(8)
+	time.Sleep(5 * time.Millisecond)
+	queue.EnQueue(10)
+	queue.DeQueue()
+	time.Sleep(10 * time.Millisecond)
+}
+
+func TestQueueRecovery(t *testing.T) {
+	queue := NewQueue(
+		SetQueueFile("./queue_periodically"),
+		SetQueueRecoveryControl(true),
+	)
+
+	if queue.Len() != 3 {
+		t.Fatal("Recovery error:", queue.Len())
+	}
+
+	v, err := queue.DeQueue()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v != 6 {
+		t.Fatal("Wrong value:", v)
+	}
+
+	v, err = queue.DeQueue()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v != 8 {
+		t.Fatal("Wrong value:", v)
+	}
+
+	v, err = queue.DeQueue()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v != 10 {
+		t.Fatal("Wrong value:", v)
+	}
+}
