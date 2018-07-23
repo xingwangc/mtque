@@ -19,6 +19,14 @@ var (
 func init() {
 	stackList = make(map[string]*Stack)
 	stackMutex = sync.RWMutex{}
+
+	go func() {
+		for {
+			for _, stack := range stackList {
+				go stack.PeriodicallyPersistent()
+			}
+		}
+	}()
 }
 
 func newStack() *Stack {
@@ -285,4 +293,19 @@ func (s *Stack) Pop() (interface{}, error) {
 	}
 
 	return value, err
+}
+
+func (s *Stack) Persistent() error {
+	return s.Buffer.Persistent()
+}
+
+func (s *Stack) PeriodicallyPersistent() {
+	if s.PersistenceControl && !s.persRunning {
+		s.persRunning = true
+		select {
+		case <-time.After(s.PersistencePeriod):
+			s.Persistent()
+		}
+		s.persRunning = false
+	}
 }

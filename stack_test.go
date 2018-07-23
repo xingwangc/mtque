@@ -131,3 +131,60 @@ func TestPopStack(t *testing.T) {
 		t.Fatal("Stack pop value error!")
 	}
 }
+
+func TestPeriodicallyPersistence(t *testing.T) {
+	stack := NewStack(
+		SetStackFile("./periodically"),
+		SetStackPersistencePeriod(10*time.Millisecond),
+		SetStackPersistenceControl(true),
+	)
+
+	stack.Push(1)
+	time.Sleep(5 * time.Millisecond)
+	stack.Push(3)
+	time.Sleep(5 * time.Millisecond)
+	stack.Push(5)
+	time.Sleep(5 * time.Millisecond)
+	stack.Pop()
+	time.Sleep(5 * time.Millisecond)
+	stack.Push(7)
+	time.Sleep(5 * time.Millisecond)
+	stack.Push(9)
+	stack.Pop()
+	time.Sleep(10 * time.Millisecond)
+}
+
+func TestRecovery(t *testing.T) {
+	stack := NewStack(
+		SetStackFile("./periodically"),
+		SetStackRecoveryControl(true),
+	)
+
+	if stack.Len() != 3 {
+		t.Fatal("Recovery error:", stack.Len())
+	}
+
+	v, err := stack.Pop()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v != 7 {
+		t.Fatal("Wrong value:", v)
+	}
+
+	v, err = stack.Pop()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v != 3 {
+		t.Fatal("Wrong value:", v)
+	}
+
+	v, err = stack.Pop()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if v != 1 {
+		t.Fatal("Wrong value:", v)
+	}
+}
